@@ -1,0 +1,5 @@
+export DATABASE_URL="postgres://postgres.[your-supabase-project]:[password]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&schema=[schema]"
+export DIRECT_URL="postgres://postgres:[password]@db.[your-supabase-project].supabase.co:5432/postgres?schema=[schema]"
+
+export NODE_ENV="dev"
+export AWS_ENDPOINT="http://localhost:4566"

@@ -1,0 +1,15 @@
+org: omitsuhashi
+app: life-log
+service: lilse-log
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+
+plugins:
+  - serverless-plugin-typescript
+
+functions:
+  create_life_log:
+    handler: src/handler/log/create.handler
