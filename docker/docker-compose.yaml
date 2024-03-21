@@ -2,7 +2,6 @@ version: '3.8'
 services:
   postgres:
     image: postgres
-    container_name: track-life-postgres
     restart: always
     ports:
       - "5432:5432"
@@ -14,7 +13,6 @@ services:
 
   localstack:
     image: localstack/localstack
-    container_name: track-life-localstack
     ports:
       - "127.0.0.1:4566:4566"
       - "127.0.0.1:4510-4559:4510-4559"
