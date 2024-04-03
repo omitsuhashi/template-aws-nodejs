@@ -4,12 +4,11 @@ data "archive_file" "lambda_zip" {
   output_path = "${var.source_path}/authorizer.zip"
 }
 
-resource "aws_cognito_identity_pool" "id_pool" {
-  identity_pool_name               = var.name
-  allow_unauthenticated_identities = false
+data "aws_ssm_parameter" "providers" {
+  name = "${terraform.workspace}/providers"
 }
 
-resource "aws_lambda_function" "lambda" {
+resource "aws_lambda_function" "authorizer" {
   function_name    = "${var.name}_authorizer"
   role             = var.role_arn
   handler          = "index.authorizerHandler"
@@ -19,15 +18,63 @@ resource "aws_lambda_function" "lambda" {
   filename         = data.archive_file.lambda_zip.output_path
   architectures    = ["arm64"]
   environment {
-    variables = {
-      COGNITO_IDENTITY_POOL_ID = aws_cognito_identity_pool.id_pool.id
-    }
   }
   layers = var.layers
 }
 
 resource "aws_api_gateway_authorizer" "authorizer" {
-  name           = var.name
-  rest_api_id    = var.rest_api_id
-  authorizer_uri = aws_lambda_function.lambda.invoke_arn
+  name                   = "${var.name}_authorizer"
+  rest_api_id            = var.rest_api_id
+  authorizer_uri         = aws_lambda_function.authorizer.invoke_arn
+  authorizer_credentials = aws_iam_role.invocation_role.arn
+}
+
+data "aws_iam_policy_document" "invocation_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["apigateway.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "invocation_role" {
+  name               = "api_gateway_auth_invocation"
+  path               = "/"
+  assume_role_policy = data.aws_iam_policy_document.invocation_assume_role.json
+}
+
+data "aws_iam_policy_document" "invocation_policy" {
+  statement {
+    effect    = "Allow"
+    actions   = ["lambda:InvokeFunction"]
+    resources = [aws_lambda_function.authorizer.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "invocation_policy" {
+  name   = "${var.name}_authorizer_invocation_policy"
+  role   = aws_iam_role.invocation_role.id
+  policy = data.aws_iam_policy_document.invocation_policy.json
+}
+
+data "aws_iam_policy_document" "lambda_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "lambda" {
+  name               = "demo-lambda"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
