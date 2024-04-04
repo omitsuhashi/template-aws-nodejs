@@ -24,7 +24,8 @@ resource "aws_api_gateway_method" "api_method" {
   rest_api_id   = var.rest_api_id
   resource_id   = var.rest_api_resource_id
   http_method   = var.api_method
-  authorization = "NONE"
+  authorization = var.authorizer_id == null ? "NONE" : "CUSTOM"
+  authorizer_id = var.authorizer_id
   # ISSUE 認証は必要なので対応する
 }
 

@@ -4,10 +4,6 @@ data "archive_file" "lambda_zip" {
   output_path = "${var.source_path}/authorizer.zip"
 }
 
-data "aws_ssm_parameter" "providers" {
-  name = "${terraform.workspace}/providers"
-}
-
 resource "aws_lambda_function" "authorizer" {
   function_name    = "${var.name}_authorizer"
   role             = var.role_arn
@@ -37,14 +33,12 @@ data "aws_iam_policy_document" "invocation_assume_role" {
       type        = "Service"
       identifiers = ["apigateway.amazonaws.com"]
     }
-
     actions = ["sts:AssumeRole"]
   }
 }
 
 resource "aws_iam_role" "invocation_role" {
   name               = "api_gateway_auth_invocation"
-  path               = "/"
   assume_role_policy = data.aws_iam_policy_document.invocation_assume_role.json
 }
 
@@ -72,9 +66,4 @@ data "aws_iam_policy_document" "lambda_assume_role" {
       identifiers = ["lambda.amazonaws.com"]
     }
   }
-}
-
-resource "aws_iam_role" "lambda" {
-  name               = "demo-lambda"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }

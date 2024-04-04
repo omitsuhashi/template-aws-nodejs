@@ -58,3 +58,9 @@ variable "environment" {
   type        = map(string)
   default     = {}
 }
+
+variable "authorizer_id" {
+  description = "API Gateway Authorizer ID"
+  type        = string
+  default     = null
+}
